@@ -1,0 +1,101 @@
+@startuml ClassesSmartMeter
+
+package "domain" {
+  class SmartMeter {
+    - meter_id: String
+    - location: String
+    - _records: List<ConsumptionRecord>
+    + add_record(record: ConsumptionRecord)
+    + get_records(): List<ConsumptionRecord>
+  }
+
+  class ConsumptionRecord {
+    - timestamp: DateTime
+    - consumption_kwh: Float
+    - temperature_c: Float
+    - is_weekend: Boolean
+  }
+
+  interface ISmartMeterRepository {
+    + get_total_consumption_by_hour(start_date: DateTime, end_date: DateTime): List<Map>
+    + save_smart_meter(smart_meter: SmartMeter)
+    + find_by_meter_id(meter_id: String): SmartMeter
+  }
+
+  class ForecastingService {
+    - model_order: Tuple
+    - _model: Object
+    - _last_train_data: Object
+    + train_model(historical_data: Series)
+    + predict_demand(steps: Int): Series
+  }
+}
+
+package "application" {
+  class ForecastingUseCase {
+    - repository: ISmartMeterRepository
+    - service: ForecastingService
+    + execute(start_date: DateTime, end_date: DateTime, steps: Int): Series
+  }
+}
+
+package "infrastructure" {
+  class InMemorySmartMeterRepository {
+    + get_total_consumption_by_hour(start_date: DateTime, end_date: DateTime): List<Map>
+    + save_smart_meter(smart_meter: SmartMeter)
+    + find_by_meter_id(meter_id: String): SmartMeter
+  }
+  
+  class PostgresSmartMeterRepository {
+    + get_total_consumption_by_hour(start_date: DateTime, end_date: DateTime): List<Map>
+    + save_smart_meter(smart_meter: SmartMeter)
+    + find_by_meter_id(meter_id: String): SmartMeter
+  }
+  
+  class ForecastingModelArtifact {
+    - model_path: String
+    + load()
+    + save()
+  }
+  
+  class DatabaseConnection {
+    - uri: String
+  }
+}
+
+package "api" {
+  class ForecastRequestSchema {
+    - start_date: DateTime
+    - end_date: DateTime
+    - steps: Int
+  }
+  
+  class ForecastResponseSchema {
+    - timestamp: DateTime
+    - forecasted_consumption: Float
+  }
+  
+  class FastAPIController {
+    + forecast_demand(request: ForecastRequestSchema): List<ForecastResponseSchema>
+    + health(): Map
+  }
+}
+
+SmartMeter "1" *-- "*" ConsumptionRecord : contains
+InMemorySmartMeterRepository ..|> ISmartMeterRepository
+PostgresSmartMeterRepository ..|> ISmartMeterRepository
+ForecastingUseCase --> ISmartMeterRepository
+ForecastingUseCase --> ForecastingService
+PostgresSmartMeterRepository --> DatabaseConnection
+ForecastingService --> ForecastingModelArtifact
+FastAPIController --> ForecastingUseCase
+
+note top of SmartMeter
+  <<Aggregate Root>>
+end note
+
+note top of ConsumptionRecord
+  <<Value Object>>
+end note
+
+@enduml

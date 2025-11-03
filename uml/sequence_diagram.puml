@@ -1,0 +1,23 @@
+@startuml ForecastSequence
+actor "Cliente (Dashboard)" as Client
+participant "FastAPI Controller" as API
+participant "ForecastingUseCase" as UseCase
+participant "ISmartMeterRepository" as Repo
+participant "ForecastingService" as Service
+participant "ModelArtifactStore" as Artifact
+
+Client -> API: POST /forecast/demand {start_date,end_date,steps}
+API -> UseCase: execute(start_date,end_date,steps)
+UseCase -> Repo: get_total_consumption_by_hour(start_date,end_date)
+Repo --> UseCase: [{timestamp, consumption}, ...]
+UseCase -> Service: train_model(historical_data)
+Service -> Artifact: load(model_path) [optional: if pre-trained]
+Artifact --> Service: model
+Service --> UseCase: trained model
+UseCase -> Service: predict_demand(steps)
+Service --> UseCase: forecast_series
+UseCase --> API: forecast_series (mapped to response schema)
+API --> Client: 200 OK [ {timestamp, predicted_consumption_kwh}... ]
+
+note over Repo,Service: Errors handled and wrapped as HTTP 500 by API
+@enduml

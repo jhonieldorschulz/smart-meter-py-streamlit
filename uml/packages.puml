@@ -1,0 +1,44 @@
+@startuml DDDLayers
+
+package "Interface Layer" {
+  [FastAPI Controllers]
+  [Pydantic Schemas]
+}
+
+package "Application Layer" {
+  [Forecasting Use Case]
+  [DTOs / Mappers]
+}
+
+package "Domain Layer" {
+  [SmartMeter Entity]
+  [ConsumptionRecord Entity]
+  [Aggregate Roots]
+  [ISmartMeter Repository Interface]
+  [Forecasting Domain Service]
+}
+
+package "Infrastructure Layer" {
+  [Postgres Repository]
+  [InMemory Repository]
+  [SQLAlchemy DB Connection]
+  [Model Artifact Storage]
+}
+
+' Dependencies (following Dependency Inversion Principle)
+[FastAPI Controllers] --> [Forecasting Use Case]
+[Forecasting Use Case] --> [ISmartMeter Repository Interface]
+[Forecasting Use Case] --> [Forecasting Domain Service]
+[Postgres Repository] ..|> [ISmartMeter Repository Interface]
+[InMemory Repository] ..|> [ISmartMeter Repository Interface]
+[Postgres Repository] --> [SQLAlchemy DB Connection]
+[Pydantic Schemas] --> [DTOs / Mappers]
+
+note right
+  **DDD Dependency Rule:**
+  Inner layers don't depend on outer layers.
+  Dependencies point inward.
+  Infrastructure implements domain interfaces.
+end note
+
+@enduml
