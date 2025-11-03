@@ -1,8 +1,24 @@
-# Smart Meter — Py + Streamlit (Template DDD)
+# 📊 Smart Meter Data Analysis
 
-Resumo rápido
-------------
-Template que demonstra como transformar um notebook prototipado em um serviço online robusto aplicando Domain-Driven Design, SOLID e padrões de projeto.
-Inclui: FastAPI + Streamlit + PostgreSQL + ARIMA forecasting.
+Aplicação Streamlit para análise e visualização de dados de medidores inteligentes de energia.
 
-## Estrutura do repositório
+## 🚀 Funcionalidades
+
+- 📈 Visualização interativa de consumo energético
+- 📅 Filtros por data e hora
+- 🔄 Múltiplos tipos de gráficos (linha, barra, área)
+- 📤 Upload de arquivos CSV
+- 📊 Análise estatística descritiva
+
+## 🛠️ Instalação Rápida
+
+### Pré-requisitos
+- Python 3.8+
+- pip (gerenciador de pacotes Python)
+
+### Passo a Passo
+
+1. **Clone o repositório**
+```bash
+git clone https://github.com/jhonieldorschulz/smart-meter-py-streamlit
+cd smart-meter-py-streamlit
