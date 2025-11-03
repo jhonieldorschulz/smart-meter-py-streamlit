@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guia Completo: De Notebook Prototipado para Serviço Online com DDD</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-800">
+    <!-- Navegação -->
+    <nav class="sticky top-0 bg-white shadow-md z-50">
+        <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-blue-600">Smart Meter Guide</h1>
+            <ul class="flex space-x-6 text-sm font-medium">
+                <li><a href="#introducao" class="hover:text-blue-600">Introdução</a></li>
+                <li><a href="#arquitetura" class="hover:text-blue-600">Arquitetura</a></li>
+                <li><a href="#implementacao" class="hover:text-blue-600">Implementação</a></li>
+                <li><a href="#conclusao" class="hover:text-blue-600">Conclusão</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-16">
+        <div class="max-w-6xl mx-auto px-6 text-center">
+            <h2 class="text-4xl font-bold mb-4">Transformando um Notebook em um Serviço Online</h2>
+            <p class="text-xl opacity-90">Um guia prático de engenharia de software para projetos de Machine Learning em produção</p>
+            <p class="text-sm mt-4 opacity-75">Com Arquitetura DDD, Princípios SOLID, Padrões de Projeto e Integração com PostgreSQL</p>
+        </div>
+    </section>
+
+    <div class="max-w-6xl mx-auto px-6 py-12">
+        <!-- Introdução -->
+        <section id="introducao" class="mb-16">
+            <h2 class="text-3xl font-bold mb-6 text-blue-600">1. Introdução</h2>
+            
+            <div class="bg-blue-50 border-l-4 border-blue-600 p-6 rounded mb-6">
+                <h3 class="text-xl font-semibold mb-3">Contexto do Projeto</h3>
+                <p class="mb-4">
+                    Este guia documenta a transformação de um <strong>protótipo desenvolvido em Jupyter Notebook</strong> para um <strong>serviço online robusto e escalável</strong>. O projeto original envolvia a análise de dados de medidores inteligentes de uma empresa de energia, com foco em:
+                </p>
+                <ul class="list-disc list-inside space-y-2 ml-4">
+                    <li><strong>Previsão de Demanda:</strong> Utilizar histórico de consumo para prever a demanda futura de energia.</li>
+                    <li><strong>Otimização de Alocação de Transformadores:</strong> Identificar períodos de pico para planejamento de infraestrutura.</li>
+                    <li><strong>Geração Distribuída:</strong> Sugerir quando ativar fontes alternativas de energia para balancear a carga.</li>
+                </ul>
+            </div>
+
+            <h3 class="text-xl font-semibold mb-4">Desafios Enfrentados</h3>
+            <p class="mb-4">
+                O notebook prototipado, embora funcional para análise, apresentava limitações críticas para um ambiente de produção:
+            </p>
+            <table class="w-full border-collapse mb-6">
+                <thead>
+                    <tr class="bg-gray-200">
+                        <th class="border p-3 text-left">Aspecto</th>
+                        <th class="border p-3 text-left">Notebook (Protótipo)</th>
+                        <th class="border p-3 text-left">Serviço Online</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="border p-3 font-semibold">Dados</td>
+                        <td class="border p-3">CSV estático, carregado manualmente</td>
+                        <td class="border p-3">Banco de dados em tempo real com atualizações contínuas</td>
+                    </tr>
+                    <tr class="bg-gray-50">
+                        <td class="border p-3 font-semibold">Escalabilidade</td>
+                        <td class="border p-3">Limitada a um único usuário/máquina</td>
+                        <td class="border p-3">Múltiplos usuários simultâneos via API</td>
+                    </tr>
+                    <tr>
+                        <td class="border p-3 font-semibold">Manutenibilidade</td>
+                        <td class="border p-3">Código monolítico e desorganizado</td>
+                        <td class="border p-3">Arquitetura modular com separação de responsabilidades</td>
+                    </tr>
+                    <tr class="bg-gray-50">
+                        <td class="border p-3 font-semibold">Testabilidade</td>
+                        <td class="border p-3">Difícil de testar automaticamente</td>
+                        <td class="border p-3">Injeção de dependência permite testes unitários</td>
+                    </tr>
+                    <tr>
+                        <td class="border p-3 font-semibold">Interface</td>
+                        <td class="border p-3">Gráficos estáticos no notebook</td>
+                        <td class="border p-3">Dashboard interativo com Streamlit</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3 class="text-xl font-semibold mb-4">Solução Proposta</h3>
+            <p>
+                A solução implementada utiliza <strong>Arquitetura Orientada a Domínio (DDD)</strong>, <strong>Programação Orientada a Objetos (POO)</strong>, <strong>Princípios SOLID</strong> e <strong>Padrões de Projeto</strong> para criar uma arquitetura robusta, testável e escalável. Os componentes principais incluem:
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+                <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-blue-600">
+                    <h4 class="font-bold mb-2">📊 Dataset CSV</h4>
+                    <p class="text-sm">Dados sintéticos de medidores inteligentes em formato CSV para análise inicial.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-green-600">
+                    <h4 class="font-bold mb-2">🔬 Notebook Prototipado</h4>
+                    <p class="text-sm">Análise exploratória e previsão com ARIMA, servindo como prova de conceito.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-purple-600">
+                    <h4 class="font-bold mb-2">🏗️ Arquitetura DDD</h4>
+                    <p class="text-sm">Estrutura modular com separação clara entre domínio, aplicação e infraestrutura.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-red-600">
+                    <h4 class="font-bold mb-2">⚡ FastAPI</h4>
+                    <p class="text-sm">API REST moderna com injeção de dependência e validação automática.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-yellow-600">
+                    <h4 class="font-bold mb-2">🗄️ PostgreSQL</h4>
+                    <p class="text-sm">Banco de dados relacional com Docker para persistência e escalabilidade.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-indigo-600">
+                    <h4 class="font-bold mb-2">📈 Streamlit</h4>
+                    <p class="text-sm">Dashboard interativo para visualização de previsões e insights em tempo real.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Arquitetura -->
+        <section id="arquitetura" class="mb-16">
+            <h2 class="text-3xl font-bold mb-6 text-blue-600">2. Arquitetura DDD e Princípios SOLID</h2>
+
+            <h3 class="text-xl font-semibold mb-4">2.1 Visão Geral da Arquitetura</h3>
+            <p class="mb-6">
+                A arquitetura segue o padrão <strong>Domain-Driven Design (DDD)</strong>, que organiza o código em camadas bem definidas, cada uma com responsabilidades específicas:
+            </p>
+
+            <div class="bg-white p-8 rounded-lg shadow-md mb-6">
+                <div class="space-y-4">
+                    <div class="flex items-start">
+                        <div class="bg-blue-600 text-white rounded-full w-10 h-10 flex items-center justify-center mr-4 flex-shrink-0">1</div>
+                        <div>
+                            <h4 class="font-bold">Domain Layer (Camada de Domínio)</h4>
+                            <p class="text-sm text-gray-600">Contém a lógica de negócio pura, independente de frameworks ou detalhes técnicos. Inclui entidades, value objects, serviços de domínio e interfaces de repositório.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start">
+                        <div class="bg-green-600 text-white rounded-full w-10 h-10 flex items-center justify-center mr-4 flex-shrink-0">2</div>
+                        <div>
+                            <h4 class="font-bold">Application Layer (Camada de Aplicação)</h4>
+                            <p class="text-sm text-gray-600">Orquestra o fluxo de trabalho usando casos de uso (Use Cases). Coordena entre o domínio e a infraestrutura, sem conter lógica de negócio complexa.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start">
+                        <div class="bg-purple-600 text-white rounded-full w-10 h-10 flex items-center justify-center mr-4 flex-shrink-0">3</div>
+                        <div>
+                            <h4 class="font-bold">Infrastructure Layer (Camada de Infraestrutura)</h4>
+                            <p class="text-sm text-gray-600">Implementa detalhes técnicos como banco de dados, APIs externas, frameworks web. Contém repositórios concretos, adaptadores e configurações.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3 class="text-xl font-semibold mb-4">2.2 Princípios SOLID Aplicados</h3>
+
+            <div class="space-y-6">
+                <div class="bg-gradient-to-r from-red-50 to-red-100 p-6 rounded-lg border-l-4 border-red-600">
+                    <h4 class="font-bold text-red-800 mb-2">S - Single Responsibility Principle</h4>
+                    <p class="text-sm mb-3"><strong>Cada classe tem uma única razão para mudar.</strong></p>
+                    <p class="text-sm"><strong>Aplicação:</strong> A classe <code class="bg-red-200 px-2 py-1 rounded">ForecastingService</code> é responsável apenas pela lógica de previsão. A classe <code class="bg-red-200 px-2 py-1 rounded">ForecastingUseCase</code> orquestra o fluxo, e o <code class="bg-red-200 px-2 py-1 rounded">Repository</code> gerencia o acesso aos dados.</p>
+                </div>
+
+                <div class="bg-gradient-to-r from-orange-50 to-orange-100 p-6 rounded-lg border-l-4 border-orange-600">
+                    <h4 class="font-bold text-orange-800 mb-2">O - Open/Closed Principle</h4>
+                    <p class="text-sm mb-3"><strong>Aberto para extensão, fechado para modificação.</strong></p>
+                    <p class="text-sm"><strong>Aplicação:</strong> A interface <code class="bg-orange-200 px-2 py-1 rounded">ISmartMeterRepository</code> permite trocar entre <code class="bg-orange-200 px-2 py-1 rounded">InMemorySmartMeterRepository</code> e <code class="bg-orange-200 px-2 py-1 rounded">PostgresSmartMeterRepository</code> sem alterar o código da aplicação.</p>
+                </div>
+
+                <div class="bg-gradient-to-r from-yellow-50 to-yellow-100 p-6 rounded-lg border-l-4 border-yellow-600">
+                    <h4 class="font-bold text-yellow-800 mb-2">L - Liskov Substitution Principle</h4>
+                    <p class="text-sm mb-3"><strong>Subclasses devem ser substituíveis por suas classes base.</strong></p>
+                    <p class="text-sm"><strong>Aplicação:</strong> Ambas as implementações de repositório (<code class="bg-yellow-200 px-2 py-1 rounded">InMemory</code> e <code class="bg-yellow-200 px-2 py-1 rounded">Postgres</code>) implementam a mesma interface e podem ser usadas intercambiavelmente.</p>
+                </div>
+
+                <div class="bg-gradient-to-r from-green-50 to-green-100 p-6 rounded-lg border-l-4 border-green-600">
+                    <h4 class="font-bold text-green-800 mb-2">I - Interface Segregation Principle</h4>
+                    <p class="text-sm mb-3"><strong>Clientes não devem depender de interfaces que não usam.</strong></p>
+                    <p class="text-sm"><strong>Aplicação:</strong> A interface <code class="bg-green-200 px-2 py-1 rounded">ISmartMeterRepository</code> define apenas os métodos necessários para a previsão, evitando métodos desnecessários.</p>
+                </div>
+
+                <div class="bg-gradient-to-r from-blue-50 to-blue-100 p-6 rounded-lg border-l-4 border-blue-600">
+                    <h4 class="font-bold text-blue-800 mb-2">D - Dependency Inversion Principle</h4>
+                    <p class="text-sm mb-3"><strong>Dependa de abstrações, não de implementações concretas.</strong></p>
+                    <p class="text-sm"><strong>Aplicação:</strong> O <code class="bg-blue-200 px-2 py-1 rounded">ForecastingUseCase</code> depende da interface <code class="bg-blue-200 px-2 py-1 rounded">ISmartMeterRepository</code>, não de uma implementação específica. A injeção de dependência (via FastAPI) fornece a implementação concreta em tempo de execução.</p>
+                </div>
+            </div>
+
+            <h3 class="text-xl font-semibold mb-4 mt-8">2.3 Padrões de Projeto Utilizados</h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h4 class="font-bold mb-2">🏭 Factory Pattern</h4>
+                    <p class="text-sm">Usado nas dependências do FastAPI (<code class="bg-gray-200 px-2 py-1 rounded">get_smart_meter_repository</code>, <code class="bg-gray-200 px-2 py-1 rounded">get_forecasting_use_case</code>) para criar instâncias com injeção de dependência.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h4 class="font-bold mb-2">📦 Repository Pattern</h4>
+                    <p class="text-sm">Abstrai o acesso aos dados, permitindo trocar a fonte de dados sem alterar a lógica de negócio.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h4 class="font-bold mb-2">🎯 Use Case Pattern</h4>
+                    <p class="text-sm">Encapsula a lógica de aplicação em casos de uso específicos, facilitando a testabilidade e a reutilização.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h4 class="font-bold mb-2">💉 Dependency Injection</h4>
+                    <p class="text-sm">Implementado via FastAPI para fornecer dependências em tempo de execução, facilitando testes e configuração.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Implementação -->
+        <section id="implementacao" class="mb-16">
+            <h2 class="text-3xl font-bold mb-6 text-blue-600">3. Implementação Prática</h2>
+
+            <h3 class="text-xl font-semibold mb-4">3.1 Estrutura de Diretórios</h3>
+            <p class="mb-4">
+                A estrutura do projeto segue a organização DDD, com separação clara entre camadas:
+            </p>
+            <pre class="bg-gray-900 text-gray-100 p-6 rounded-lg overflow-x-auto mb-6"><code>smart_meter_guide/
+├── data/
+│   └── smart_meter_data.csv          # Dataset sintético
+├── src/
+│   ├── domain/
+│   │   ├── smart_meter/
+│   │   │   ├── entities.py           # SmartMeter (Agregado Raiz), ConsumptionRecord (Value Object)
+│   │   │   └── repository.py         # ISmartMeterRepository (Interface)
+│   │   └── forecasting/
+│   │       └── service.py            # ForecastingService (Serviço de Domínio)
+│   ├── application/
+│   │   └── services/
+│   │       └── forecasting_use_case.py  # ForecastingUseCase (Orquestração)
+│   ├── infrastructure/
+│   │   ├── db/
+│   │   │   ├── in_memory_repository.py  # Implementação em memória
+│   │   │   └── postgres_repository.py   # Implementação PostgreSQL
+│   │   └── api/
+│   │       ├── schemas.py            # Schemas Pydantic
+│   │       └── api.py                # Endpoints FastAPI
+│   └── main.py                       # Entrada da aplicação
+├── dashboard.py                      # Dashboard Streamlit
+├── docker-compose.yml                # Configuração PostgreSQL
+└── analysis_prototype.ipynb          # Notebook prototipado
+
+            </code></pre>
+
+            <h3 class="text-xl font-semibold mb-4">3.2 Exemplo de Código: Entidades de Domínio</h3>
+            <p class="mb-4">
+                As entidades de domínio representam os conceitos principais do negócio. Aqui, <code class="bg-gray-200 px-2 py-1 rounded">SmartMeter</code> é um Agregado Raiz que encapsula a lógica de um medidor inteligente:
+            </p>
+            <pre class="bg-gray-900 text-gray-100 p-6 rounded-lg overflow-x-auto mb-6"><code class="language-python">from datetime import datetime
+from typing import List, Optional
+
+# Value Object
+class ConsumptionRecord:
+    def __init__(self, timestamp: datetime, consumption_kwh: float, temperature_c: float, is_weekend: bool):
+        if consumption_kwh < 0:
+            raise ValueError("Consumption cannot be negative.")
+        self.timestamp = timestamp
+        self.consumption_kwh = consumption_kwh
+        self.temperature_c = temperature_c
+        self.is_weekend = is_weekend
+
+# Aggregate Root
+class SmartMeter:
+    def __init__(self, meter_id: str, location: Optional[str] = None):
+        if not meter_id:
+            raise ValueError("Meter ID is required.")
+        self.meter_id = meter_id
+        self.location = location
+        self._records: List[ConsumptionRecord] = []
+
+    def add_record(self, record: ConsumptionRecord):
+        self._records.append(record)
+
+    def get_records(self) -> List[ConsumptionRecord]:
+        return list(self._records)  # Retorna uma cópia para garantir imutabilidade</code></pre>
+
+            <h3 class="text-xl font-semibold mb-4">3.3 Exemplo de Código: Serviço de Domínio</h3>
+            <p class="mb-4">
+                O serviço de domínio encapsula a lógica de previsão, independente de detalhes técnicos:
+            </p>
+            <pre class="bg-gray-900 text-gray-100 p-6 rounded-lg overflow-x-auto mb-6"><code class="language-python">from statsmodels.tsa.arima.model import ARIMA
+from datetime import datetime, timedelta
+import pandas as pd
+
+class ForecastingService:
+    def __init__(self, model_order: Tuple[int, int, int] = (5, 1, 0)):
+        self.model_order = model_order
+        self._model = None
+        self._last_train_data = None
+
+    def train_model(self, historical_data: pd.Series):
+        if historical_data.empty:
+            raise ValueError("Historical data cannot be empty for training.")
+        
+        model = ARIMA(historical_data, order=self.model_order)
+        self._model = model.fit()
+        self._last_train_data = historical_data
+
+    def predict_demand(self, steps: int) -> pd.Series:
+        if self._model is None:
+            raise RuntimeError("Model must be trained before making predictions.")
+        
+        forecast = self._model.forecast(steps=steps)
+        last_time = self._last_train_data.index[-1]
+        future_index = pd.date_range(start=last_time + timedelta(hours=1), periods=steps, freq='H')
+        
+        return pd.Series(forecast.values, index=future_index)</code></pre>
+
+            <h3 class="text-xl font-semibold mb-4">3.4 Exemplo de Código: Caso de Uso (Application Service)</h3>
+            <p class="mb-4">
+                O caso de uso orquestra o fluxo de trabalho, injetando as dependências:
+            </p>
+            <pre class="bg-gray-900 text-gray-100 p-6 rounded-lg overflow-x-auto mb-6"><code class="language-python">class ForecastingUseCase:
+    def __init__(self, repository: ISmartMeterRepository, service: ForecastingService):
+        self.repository = repository
+        self.service = service
+
+    def execute(self, start_date: datetime, end_date: datetime, steps: int) -> pd.Series:
+        try:
+            # 1. Obter dados históricos agregados
+            historical_data_dict = self.repository.get_total_consumption_by_hour(start_date, end_date)
+            
+            # 2. Converter para pd.Series
+            historical_data = pd.Series(
+                data=[item['consumption'] for item in historical_data_dict],
+                index=[item['timestamp'] for item in historical_data_dict]
+            )
+            
+            # 3. Treinar o modelo
+            self.service.train_model(historical_data)
+            
+            # 4. Realizar a previsão
+            forecast_series = self.service.predict_demand(steps)
+            
+            return forecast_series
+        except Exception as e:
+            raise RuntimeError(f"Falha ao executar a previsão de demanda: {e}")</code></pre>
+
+            <h3 class="text-xl font-semibold mb-4">3.5 Exemplo de Código: API FastAPI com Injeção de Dependência</h3>
+            <p class="mb-4">
+                A API FastAPI utiliza injeção de dependência para fornecer instâncias dos serviços:
+            </p>
+            <pre class="bg-gray-900 text-gray-100 p-6 rounded-lg overflow-x-auto mb-6"><code class="language-python">from fastapi import FastAPI, Depends, HTTPException
+
+app = FastAPI(title="Smart Meter Forecasting API")
+
+# Dependências (Factory Pattern)
+def get_smart_meter_repository() -> ISmartMeterRepository:
+    return InMemorySmartMeterRepository(initial_data_path=REPO_PATH)
+
+def get_forecasting_use_case(
+    repository: ISmartMeterRepository = Depends(get_smart_meter_repository)
+) -> ForecastingUseCase:
+    forecasting_service = ForecastingService(model_order=(5, 1, 0))
+    return ForecastingUseCase(repository=repository, service=forecasting_service)
+
+# Endpoint
+@app.post("/forecast/demand", response_model=List[ForecastResponseSchema])
+async def forecast_demand(
+    request: ForecastRequestSchema,
+    use_case: ForecastingUseCase = Depends(get_forecasting_use_case)
+):
+    try:
+        forecast_series = use_case.execute(
+            start_date=request.start_date,
+            end_date=request.end_date,
+            steps=request.steps
+        )
+        
+        response_data = []
+        for timestamp, prediction in forecast_series.items():
+            response_data.append(ForecastResponseSchema(
+                timestamp=timestamp,
+                predicted_consumption_kwh=prediction
+            ))
+        
+        return response_data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))</code></pre>
+
+            <h3 class="text-xl font-semibold mb-4">3.6 Configuração do Banco de Dados com Docker</h3>
+            <p class="mb-4">
+                O arquivo <code class="bg-gray-200 px-2 py-1 rounded">docker-compose.yml</code> define o serviço PostgreSQL:
+            </p>
+            <pre class="bg-gray-900 text-gray-100 p-6 rounded-lg overflow-x-auto mb-6"><code class="language-yaml">version: '3.8'
+
+services:
+  db:
+    image: postgres:14-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: smart_meter_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+
+volumes:
+  postgres_data:</code></pre>
+
+            <p class="mb-4">
+                Para iniciar o banco de dados, execute:
+            </p>
+            <pre class="bg-gray-900 text-gray-100 p-6 rounded-lg overflow-x-auto mb-6"><code class="language-bash">docker-compose up -d</code></pre>
+
+            <h3 class="text-xl font-semibold mb-4">3.7 Dashboard Streamlit</h3>
+            <p class="mb-4">
+                O dashboard interativo consome a API FastAPI para exibir previsões em tempo real:
+            </p>
+            <pre class="bg-gray-900 text-gray-100 p-6 rounded-lg overflow-x-auto mb-6"><code class="language-python">import streamlit as st
+import requests
+import pandas as pd
+
+st.set_page_config(page_title="Dashboard de Previsão de Demanda", layout="wide")
+
+API_URL = "http://localhost:8000/forecast/demand"
+
+@st.cache_data(ttl=60)
+def get_api_health():
+    try:
+        response = requests.get("http://localhost:8000/health")
+        return response.status_code == 200
+    except:
+        return False
+
+def get_forecast(start_date, end_date, steps):
+    payload = {
+        "start_date": start_date.isoformat(),
+        "end_date": end_date.isoformat(),
+        "steps": steps
+    }
+    response = requests.post(API_URL, json=payload)
+    return pd.DataFrame(response.json())
+
+st.title("⚡️ Dashboard de Previsão de Demanda de Energia")
+
+# Controles
+end_date = st.sidebar.date_input("Data Final dos Dados Históricos")
+steps = st.sidebar.slider("Horas de Previsão", 1, 72, 24)
+
+if st.sidebar.button("Gerar Previsão"):
+    forecast_df = get_forecast(start_date, end_date, steps)
+    st.line_chart(forecast_df)</code></pre>
+
+            <h3 class="text-xl font-semibold mb-4">3.8 Executando o Projeto</h3>
+            <p class="mb-4">
+                Para executar o projeto completo, siga os passos abaixo:
+            </p>
+            <ol class="list-decimal list-inside space-y-3 mb-6">
+                <li><strong>Instalar dependências:</strong>
+                    <pre class="bg-gray-900 text-gray-100 p-3 rounded mt-2"><code>pip install fastapi uvicorn pydantic pandas numpy matplotlib scikit-learn statsmodels streamlit requests sqlalchemy psycopg2-binary</code></pre>
+                </li>
+                <li><strong>Gerar dados:</strong>
+                    <pre class="bg-gray-900 text-gray-100 p-3 rounded mt-2"><code>python3 generate_data.py</code></pre>
+                </li>
+                <li><strong>Iniciar o banco de dados (opcional):</strong>
+                    <pre class="bg-gray-900 text-gray-100 p-3 rounded mt-2"><code>docker-compose up -d</code></pre>
+                </li>
+                <li><strong>Executar a API:</strong>
+                    <pre class="bg-gray-900 text-gray-100 p-3 rounded mt-2"><code>python3 -m src.main</code></pre>
+                </li>
+                <li><strong>Executar o dashboard (em outro terminal):</strong>
+                    <pre class="bg-gray-900 text-gray-100 p-3 rounded mt-2"><code>streamlit run dashboard.py</code></pre>
+                </li>
+            </ol>
+        </section>
+
+        <!-- Conclusão -->
+        <section id="conclusao" class="mb-16">
+            <h2 class="text-3xl font-bold mb-6 text-blue-600">4. Conclusão e Próximos Passos</h2>
+
+            <h3 class="text-xl font-semibold mb-4">Benefícios da Abordagem DDD + SOLID</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div class="bg-green-50 p-6 rounded-lg border-l-4 border-green-600">
+                    <h4 class="font-bold text-green-800 mb-2">✅ Manutenibilidade</h4>
+                    <p class="text-sm">O código é organizado em camadas bem definidas, facilitando a localização e correção de bugs.</p>
+                </div>
+                <div class="bg-green-50 p-6 rounded-lg border-l-4 border-green-600">
+                    <h4 class="font-bold text-green-800 mb-2">✅ Testabilidade</h4>
+                    <p class="text-sm">A injeção de dependência permite criar testes unitários sem dependências externas.</p>
+                </div>
+                <div class="bg-green-50 p-6 rounded-lg border-l-4 border-green-600">
+                    <h4 class="font-bold text-green-800 mb-2">✅ Escalabilidade</h4>
+                    <p class="text-sm">A arquitetura modular permite adicionar novas funcionalidades sem afetar o código existente.</p>
+                </div>
+                <div class="bg-green-50 p-6 rounded-lg border-l-4 border-green-600">
+                    <h4 class="font-bold text-green-800 mb-2">✅ Flexibilidade</h4>
+                    <p class="text-sm">Trocar de banco de dados (PostgreSQL, MongoDB, etc.) é simples, pois a lógica de negócio não depende da implementação.</p>
+                </div>
+            </div>
+
+            <h3 class="text-xl font-semibold mb-4">Próximos Passos para Produção</h3>
+            <div class="space-y-4 mb-6">
+                <div class="bg-blue-50 p-6 rounded-lg border-l-4 border-blue-600">
+                    <h4 class="font-bold text-blue-800 mb-2">1. Testes Automatizados</h4>
+                    <p class="text-sm">Implementar testes unitários (pytest) para as entidades de domínio e casos de uso, e testes de integração para a API.</p>
+                </div>
+                <div class="bg-blue-50 p-6 rounded-lg border-l-4 border-blue-600">
+                    <h4 class="font-bold text-blue-800 mb-2">2. CI/CD Pipeline</h4>
+                    <p class="text-sm">Configurar GitHub Actions ou GitLab CI para executar testes automaticamente e fazer deploy contínuo.</p>
+                </div>
+                <div class="bg-blue-50 p-6 rounded-lg border-l-4 border-blue-600">
+                    <h4 class="font-bold text-blue-800 mb-2">3. Logging e Monitoramento</h4>
+                    <p class="text-sm">Adicionar logging estruturado (ex: ELK Stack) e monitoramento de performance (ex: Prometheus, Grafana).</p>
+                </div>
+                <div class="bg-blue-50 p-6 rounded-lg border-l-4 border-blue-600">
+                    <h4 class="font-bold text-blue-800 mb-2">4. Autenticação e Autorização</h4>
+                    <p class="text-sm">Implementar JWT ou OAuth2 para proteger os endpoints da API.</p>
+                </div>
+                <div class="bg-blue-50 p-6 rounded-lg border-l-4 border-blue-600">
+                    <h4 class="font-bold text-blue-800 mb-2">5. Containerização Completa</h4>
+                    <p class="text-sm">Criar Dockerfiles para a API e o dashboard, e orquestrar com Kubernetes para escalabilidade horizontal.</p>
+                </div>
+                <div class="bg-blue-50 p-6 rounded-lg border-l-4 border-blue-600">
+                    <h4 class="font-bold text-blue-800 mb-2">6. Modelos de ML Avançados</h4>
+                    <p class="text-sm">Experimentar com SARIMAX, Prophet, ou redes neurais (LSTM) para melhorar a precisão das previsões.</p>
+                </div>
+            </div>
+
+            <h3 class="text-xl font-semibold mb-4">Conclusão Final</h3>
+            <p class="mb-4">
+                Este guia demonstrou como transformar um protótipo em Jupyter Notebook em um serviço online robusto e escalável, aplicando princípios de engenharia de software bem estabelecidos. A combinação de <strong>Arquitetura DDD</strong>, <strong>Princípios SOLID</strong> e <strong>Padrões de Projeto</strong> garante que o código seja:
+            </p>
+            <ul class="list-disc list-inside space-y-2 mb-6 ml-4">
+                <li><strong>Fácil de entender:</strong> A organização clara facilita a onboarding de novos desenvolvedores.</li>
+                <li><strong>Fácil de manter:</strong> Mudanças em uma camada não afetam as outras.</li>
+                <li><strong>Fácil de testar:</strong> A injeção de dependência permite testes isolados.</li>
+                <li><strong>Fácil de estender:</strong> Novas funcionalidades podem ser adicionadas sem refatoração massiva.</li>
+            </ul>
+
+            <div class="bg-gradient-to-r from-blue-600 to-blue-800 text-white p-8 rounded-lg">
+                <h4 class="text-xl font-bold mb-2">🎯 Resumo do Projeto</h4>
+                <p class="mb-4">
+                    Este guia forneceu uma abordagem completa para transformar um notebook prototipado em um serviço online profissional. Os componentes entregues incluem:
+                </p>
+                <ul class="list-disc list-inside space-y-2">
+                    <li>✅ Dataset sintético de medidores inteligentes (CSV)</li>
+                    <li>✅ Notebook prototipado com análise exploratória e previsão ARIMA</li>
+                    <li>✅ Arquitetura DDD com separação clara de camadas</li>
+                    <li>✅ API FastAPI com injeção de dependência e validação automática</li>
+                    <li>✅ Repositório PostgreSQL com abstração de dados</li>
+                    <li>✅ Dashboard Streamlit interativo para visualização</li>
+                    <li>✅ Documentação completa em HTML com TailwindCSS</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Referências -->
+        <section class="mt-16 pt-8 border-t-2 border-gray-300">
+            <h2 class="text-3xl font-bold mb-6 text-blue-600">Referências e Recursos</h2>
+            <ul class="space-y-3 text-sm">
+                <li><strong>[1]</strong> <a href="https://martinfowler.com/bliki/DomainDrivenDesign.html" class="text-blue-600 hover:underline">Martin Fowler - Domain-Driven Design</a></li>
+                <li><strong>[2]</strong> <a href="https://en.wikipedia.org/wiki/SOLID" class="text-blue-600 hover:underline">Wikipedia - SOLID (object-oriented design)</a></li>
+                <li><strong>[3]</strong> <a href="https://fastapi.tiangolo.com/" class="text-blue-600 hover:underline">FastAPI Official Documentation</a></li>
+                <li><strong>[4]</strong> <a href="https://www.postgresql.org/" class="text-blue-600 hover:underline">PostgreSQL Official Website</a></li>
+                <li><strong>[5]</strong> <a href="https://streamlit.io/" class="text-blue-600 hover:underline">Streamlit Official Website</a></li>
+                <li><strong>[6]</strong> <a href="https://www.statsmodels.org/" class="text-blue-600 hover:underline">Statsmodels - Statistical Modeling and Econometrics</a></li>
+                <li><strong>[7]</strong> <a href="https://www.docker.com/" class="text-blue-600 hover:underline">Docker Official Website</a></li>
+                <li><strong>[8]</strong> <a href="https://refactoring.guru/design-patterns" class="text-blue-600 hover:underline">Refactoring Guru - Design Patterns</a></li>
+            </ul>
+        </section>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-gray-300 py-8 mt-16">
+        <div class="max-w-6xl mx-auto px-6 text-center">
+            <p class="mb-2">Guia Completo: De Notebook Prototipado para Serviço Online com DDD</p>
+            <p class="text-sm opacity-75">Desenvolvido com ❤️ por Manus AI | Outubro 2025</p>
+        </div>
+    </footer>
+
+    <script>
+        // Highlight.js para colorir código
+        hljs.highlightAll();
+    </script>
+</body>
+</html>
+

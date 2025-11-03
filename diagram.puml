@@ -1,0 +1,26 @@
+@startuml
+
+package "Interface / Apresentação" {
+  [PedidoController]
+}
+
+package "Aplicação" {
+  [ConfirmarPedidoService]
+}
+
+package "Domínio/SmartMeter" {
+  [Pedido]
+  interface "PedidoRepository" as PedidoRepository
+}
+
+package "Infraestrutura" {
+  [PedidoRepositoryJpa]
+}
+
+PedidoController --> ConfirmarPedidoService : chama
+ConfirmarPedidoService --> Pedido : usa
+ConfirmarPedidoService --> PedidoRepository : chama
+PedidoRepositoryJpa ..|> PedidoRepository : implementa
+PedidoRepositoryJpa --> Pedido : persiste
+
+@enduml
