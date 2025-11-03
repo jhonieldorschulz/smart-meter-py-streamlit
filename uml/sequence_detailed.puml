@@ -1,0 +1,91 @@
+@startuml ForecastDemandSequence
+
+actor Client
+participant "FastAPI Controller\n(/forecast/demand)" as Controller
+participant "ForecastingUseCase" as UseCase
+participant "ISmartMeterRepository\n(RepositoryImpl)" as Repo
+participant "ForecastingService" as Service
+participant "ForecastingModelArtifact\n(Model Store)" as Artifact
+participant "Cache (optional)" as Cache
+participant "Background Worker\n(retrain/async)" as Worker
+
+== Validação de Entrada ==
+Client -> Controller: POST /forecast/demand {start_date, end_date, steps}
+activate Controller
+
+Controller -> Controller: validate(request)
+
+alt Request Inválido
+    Controller --> Client: 400 Bad Request
+    deactivate Controller
+    return
+end
+
+== Verificação de Cache ==
+Controller -> Cache: get(cache_key)
+activate Cache
+
+alt Cache Hit
+    Cache --> Controller: cached_forecast
+    deactivate Cache
+    Controller --> Client: 200 OK (cached result)
+    deactivate Controller
+    return
+else Cache Miss
+    Cache --> Controller: null
+    deactivate Cache
+end
+
+== Lógica Principal de Previsão ==
+Controller -> UseCase: execute(start_date, end_date, steps)
+activate UseCase
+
+UseCase -> Repo: get_total_consumption_by_hour(start_date, end_date)
+activate Repo
+Repo --> UseCase: historical_data[]
+deactivate Repo
+
+UseCase -> Service: prepare_series(historical_data)
+activate Service
+
+Service -> Artifact: load(model_key)
+activate Artifact
+
+alt Modelo Existe
+    Artifact --> Service: model_object
+else Modelo Não Encontrado
+    Artifact --> Service: null
+end
+deactivate Artifact
+
+Service -> Service: train_model(historical_series) if needed
+note right: Treinamento síncrono ou\nassíncrono via Background Worker
+
+Service --> UseCase: trained_model
+deactivate Service
+
+UseCase -> Service: predict_demand(steps)
+activate Service
+Service --> UseCase: forecast_series
+deactivate Service
+
+UseCase -> UseCase: format_response(forecast_series)
+UseCase --> Controller: forecast_response[]
+deactivate UseCase
+
+== Pós-Processamento ==
+Controller -> Cache: set(cache_key, forecast, TTL=60s)
+activate Cache
+Cache --> Controller: OK
+deactivate Cache
+
+Controller -> Worker: emit DemandForecastedEvent
+activate Worker
+Worker --> Worker: handle_async_tasks()
+deactivate Worker
+
+== Resposta Final ==
+Controller --> Client: 200 OK + forecast_response
+deactivate Controller
+
+@enduml
